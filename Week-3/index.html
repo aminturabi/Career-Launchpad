@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreditGuard | AI Risk Scoring</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .header-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 500px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input, select {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 500px) {
+            .full-width {
+                grid-column: span 1;
+            }
+        }
+
+        button {
+            margin-top: 1rem;
+            background: linear-gradient(to right, var(--primary), #a855f7);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .result-overlay {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.4);
+            border-left: 4px solid var(--primary);
+            display: none;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .risk-badge {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .risk-good {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .risk-bad {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .probability-bar-container {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .probability-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loader {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #white;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-section">
+            <h1>Credit<br>Guard</h1>
+            <p class="subtitle">Advanced machine learning pipeline for real-time loan risk assessment. Input applicant details to generate a comprehensive credit profile.</p>
+            
+            <div id="statsCard" style="margin-top: auto; opacity: 0.6; font-size: 0.9rem;">
+                Powered by CatBoost & Scikit-learn<br>
+                Model v1.0.4 | Precision: 84.2%
+            </div>
+        </div>
+
+        <div class="card">
+            <form id="loanForm">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label>Age</label>
+                        <input type="number" name="Age" placeholder="e.g. 25" required min="18" max="100">
+                    </div>
+                    <div class="input-group">
+                        <label>Sex</label>
+                        <select name="Sex" required>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Job Category</label>
+                        <select name="Job" required>
+                            <option value="0">Unskilled (Non-Resident)</option>
+                            <option value="1">Unskilled (Resident)</option>
+                            <option value="2">Skilled</option>
+                            <option value="3">Highly Skilled</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Housing Status</label>
+                        <select name="Housing" required>
+                            <option value="own">Own</option>
+                            <option value="rent">Rent</option>
+                            <option value="free">Free</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Saving Accounts</label>
+                        <select name="Saving_accounts" required>
+                            <option value="little">Little</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="quite rich">Quite Rich</option>
+                            <option value="rich">Rich</option>
+                            <option value="NA">Not Specified</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Checking Account</label>
+                        <select name="Checking_account" required>
+                            <option value="little">Little</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="rich">Rich</option>
+                            <option value="NA">Not Specified</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Credit Amount (DM)</label>
+                        <input type="number" name="Credit_amount" placeholder="e.g. 5000" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Duration (Months)</label>
+                        <input type="number" name="Duration" placeholder="e.g. 12" required>
+                    </div>
+                    <div class="input-group full-width">
+                        <label>Purpose of Loan</label>
+                        <select name="Purpose" required>
+                            <option value="car">Car Purchase</option>
+                            <option value="furniture/equipment">Furniture/Equipment</option>
+                            <option value="radio/TV">Radio/TV</option>
+                            <option value="domestic appliances">Domestic Appliances</option>
+                            <option value="repairs">Repairs</option>
+                            <option value="education">Education</option>
+                            <option value="business">Business</option>
+                            <option value="vacation/others">Vacation/Others</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">
+                    <span id="btnText">Analyze Application</span>
+                    <div class="loader" id="loader"></div>
+                </button>
+            </form>
+
+            <div id="resultBox" class="result-overlay">
+                <div class="result-header">
+                    <span style="font-weight: 600; color: var(--text-dim);">Assessment Result</span>
+                    <span id="riskBadge" class="risk-badge">Low Risk</span>
+                </div>
+                <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem;" id="confidenceText">
+                    99.3% Confidence
+                </div>
+                <div style="color: var(--text-dim); font-size: 0.9rem;">
+                    The applicant is classified as <span id="riskDesc" style="color: var(--text-main); font-weight: 600;">Good Credit</span> based on the provided financial and demographic metrics.
+                </div>
+                <div class="probability-bar-container">
+                    <div id="probBar" class="probability-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("loanForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById("submitBtn");
+            const btnText = document.getElementById("btnText");
+            const loader = document.getElementById("loader");
+            const resultBox = document.getElementById("resultBox");
+            
+            // UI States
+            btn.disabled = true;
+            btnText.style.display = "none";
+            loader.style.display = "block";
+            resultBox.style.display = "none";
+
+            try {
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                // Convert numeric fields properly
+                data.Age = parseInt(data.Age);
+                data.Job = parseInt(data.Job);
+                data.Credit_amount = parseInt(data.Credit_amount);
+                data.Duration = parseInt(data.Duration);
+
+                // Mapping Saving_accounts name because pydantic expectation
+                // Note: The app.py pydantic model uses Saving_accounts (with underscore)
+                // but the internal DF creation in app.py uses 'Saving accounts' (with space)
+                // The pydantic model matches our field name.
+
+                const response = await fetch("http://127.0.0.1:8000/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error("API Connection Failed");
+
+                const result = await response.json();
+                
+                // Update UI with results
+                const isGood = result.prediction === 0;
+                const prob = isGood ? result.probabilities["Low Risk (Good)"] : result.probabilities["High Risk (Bad)"];
+                const probPercent = (prob * 100).toFixed(1);
+
+                const riskBadge = document.getElementById("riskBadge");
+                riskBadge.textContent = isGood ? "Low Risk" : "High Risk";
+                riskBadge.className = `risk-badge ${isGood ? 'risk-good' : 'risk-bad'}`;
+                
+                document.getElementById("confidenceText").textContent = `${probPercent}% Confidence`;
+                document.getElementById("riskDesc").textContent = isGood ? "Low Risk (Good)" : "High Risk (Bad)";
+                document.getElementById("riskDesc").style.color = isGood ? "var(--success)" : "var(--danger)";
+                
+                const bar = document.getElementById("probBar");
+                bar.style.width = "0%";
+                bar.style.backgroundColor = isGood ? "var(--success)" : "var(--danger)";
+                
+                resultBox.style.display = "block";
+                setTimeout(() => {
+                    bar.style.width = `${probPercent}%`;
+                }, 100);
+
+            } catch (err) {
+                alert("Error connecting to CreditGuard API. Please ensure app.py is running.");
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btnText.style.display = "block";
+                loader.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
