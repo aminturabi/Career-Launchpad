@@ -37,7 +37,7 @@ class LoanApplicant(BaseModel):
 
 @app.get("/")
 def home():
-    return FileResponse('index.html')
+    return {"status": "CreditGuard API Running"}
 
 
 @app.post("/predict")
@@ -62,13 +62,30 @@ def predict(applicant: LoanApplicant):
     
     risk_level = "High Risk (Bad)" if prediction == 1 else "Low Risk (Good)"
     
+    # Generate basic explainability factors
+    reasons = []
+    if applicant.Saving_accounts in ['little', 'moderate']:
+        reasons.append(f"Low savings account")
+    if applicant.Duration > 24:
+        reasons.append(f"High loan duration")
+    if applicant.Credit_amount > 5000:
+        reasons.append(f"Large credit amount")
+    if applicant.Checking_account in ['little']:
+        reasons.append(f"Low checking account balance")
+    if applicant.Job in [0, 1]:
+        reasons.append(f"Unskilled job category")
+        
+    if not reasons:
+        reasons.append("Overall profile characteristics")
+    
     return {
         "prediction": int(prediction),
         "risk_level": risk_level,
         "probabilities": {
             "Low Risk (Good)": probability[0],
             "High Risk (Bad)": probability[1]
-        }
+        },
+        "reasons": reasons
     }
 
 if __name__ == "__main__":
